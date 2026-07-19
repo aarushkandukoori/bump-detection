@@ -1,0 +1,6 @@
+# Inference service runtime deps (bump-common installed separately from ./shared)
+redis>=5.0
+onnxruntime>=1.17
+numpy>=1.26
+scipy>=1.11
+prometheus-client>=0.19

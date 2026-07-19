@@ -1,0 +1,24 @@
+# Ruff config for all Python in the repo (services, shared, training, tests).
+target-version = "py311"
+line-length = 100
+
+extend-exclude = [
+    ".venv",
+    ".venv-verify",
+    "frontend",
+    "dist",
+    "**/build",
+    "**/*.egg-info",
+]
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "B008",  # function calls in argument defaults (FastAPI Depends/Query idiom)
+    "E501",  # line length handled by the formatter, not enforced hard
+]
+
+[lint.per-file-ignores]
+# Tests may re-import lazily and use module-level import juggling.
+"tests/**" = ["E402", "F401"]
+"**/__init__.py" = ["F401"]

@@ -1,0 +1,159 @@
+# BUMP — local orchestration for the full real-time pipeline.
+#
+# Topology:
+#   ingestion --(ecg:raw)--> inference --(hr:events, alerts:events)--> api --> frontend
+#                    \____________ redis (streams) ___________/         \__ db (TimescaleDB)
+#
+# All Python services build from the *repo root* context so their Dockerfiles can
+# `COPY shared/ ./shared/` and `pip install -e ./shared` (the locked bump-common
+# contract package). The frontend builds from ./frontend and is served by nginx.
+#
+# REDIS_URL / DATABASE_URL are pinned to the in-network service names here; the
+# tunable clinical/signal knobs fall back to the same defaults as
+# bump_common.constants but can be overridden via a local .env or the shell.
+#
+# Usage:
+#   make model     # export a shape-correct (untrained) ONNX so inference can boot
+#   make up        # docker compose up --build
+
+name: bump
+
+services:
+  # --- TimescaleDB: the only service the API writes to -----------------------
+  db:
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bump
+      POSTGRES_PASSWORD: bump
+      POSTGRES_DB: bump
+    volumes:
+      - bump_pgdata:/var/lib/postgresql/data
+      # Applied once on first init to create the sessions/hr_readings/alerts schema.
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"  # exposed for host-side psql / debugging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bump -d bump"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks: [bump]
+
+  # --- Redis: the stream bus (ecg:raw, hr:events, alerts:events) -------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"  # exposed for host-side redis-cli / debugging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    networks: [bump]
+
+  # --- API: FastAPI + WS gateway, sole DB writer -----------------------------
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://bump:bump@db:5432/bump
+      SAMPLE_RATE_HZ: ${SAMPLE_RATE_HZ:-360}
+      LATENCY_BUDGET_MS: ${LATENCY_BUDGET_MS:-250}
+      API_METRICS_PORT: ${API_METRICS_PORT:-9103}
+    ports:
+      - "8000:8000"                        # REST + WS (/ws/live, /api/*, /health)
+      - "${API_METRICS_PORT:-9103}:9103"   # Prometheus scrape
+    healthcheck:
+      # Python one-liner keeps the check dependency-free on the slim API image.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [bump]
+
+  # --- Inference: streaming R-peak + rate rule + CNN morphology --------------
+  inference:
+    build:
+      context: .
+      dockerfile: inference/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      MODEL_PATH: /models/beat_cnn.onnx
+      SAMPLE_RATE_HZ: ${SAMPLE_RATE_HZ:-360}
+      FRAME_SAMPLES: ${FRAME_SAMPLES:-8}
+      LATENCY_BUDGET_MS: ${LATENCY_BUDGET_MS:-250}
+      # Bradycardia rate-rule knobs (bump_common.BradycardiaMonitor).
+      BRADY_BPM_THRESHOLD: ${BRADY_BPM_THRESHOLD:-60}
+      BRADY_SUSTAIN_SEC: ${BRADY_SUSTAIN_SEC:-5.0}
+      BRADY_MIN_BEATS: ${BRADY_MIN_BEATS:-4}
+      INFERENCE_METRICS_PORT: ${INFERENCE_METRICS_PORT:-9102}
+    volumes:
+      # Read-only ONNX artifact; DEFAULT_MODEL_PATH == /models/beat_cnn.onnx.
+      - ./inference/models:/models:ro
+    ports:
+      - "${INFERENCE_METRICS_PORT:-9102}:9102"  # Prometheus scrape
+    networks: [bump]
+
+  # --- Ingestion: replays MIT-BIH / synthetic ECG into ecg:raw ---------------
+  ingestion:
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+    # A replay finishes and exits 0 when the record ends; only restart on crash.
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      # Demo defaults: real MIT-BIH record 100 at 1x wall-clock speed.
+      SOURCE: ${SOURCE:-mitbih}
+      RECORD: ${RECORD:-100}
+      SESSION_ID: ${SESSION_ID:-demo-100}
+      SPEED: ${SPEED:-1}
+      SYNTHETIC_HR: ${SYNTHETIC_HR:-60}
+      DURATION_SEC: ${DURATION_SEC:-60}
+      SAMPLE_RATE_HZ: ${SAMPLE_RATE_HZ:-360}
+      FRAME_SAMPLES: ${FRAME_SAMPLES:-8}
+      INGESTION_METRICS_PORT: ${INGESTION_METRICS_PORT:-9101}
+    ports:
+      - "${INGESTION_METRICS_PORT:-9101}:9101"  # Prometheus scrape
+    networks: [bump]
+
+  # --- Frontend: Vite build served by nginx ----------------------------------
+  # nginx (see frontend/nginx.conf) proxies /api and /ws to the api service, so
+  # the SPA is single-origin and needs no baked-in API URL (VITE_* stay empty).
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    networks: [bump]
+
+networks:
+  bump:
+    driver: bridge
+
+volumes:
+  bump_pgdata:

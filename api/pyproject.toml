@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bump-api"
+version = "0.1.0"
+description = "BUMP API: FastAPI WebSocket live stream + REST historical queries"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "redis>=5.0",
+    "asyncpg>=0.29",
+    "prometheus-client>=0.19",
+    "numpy>=1.26",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["bump_api*"]

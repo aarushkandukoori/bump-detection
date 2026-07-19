@@ -1,0 +1,20 @@
+# Keep Python service build contexts (repo root) lean and cache-friendly.
+.git
+.github
+.venv
+.venv-*
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+.pytest_cache
+.ruff_cache
+node_modules
+frontend/node_modules
+frontend/dist
+tests
+docs
+scripts
+*.md
+.env
+.env.*
+!.env.example

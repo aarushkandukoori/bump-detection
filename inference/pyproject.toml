@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bump-inference"
+version = "0.1.0"
+description = "BUMP inference service: online R-peak detection + ONNX beat classifier"
+requires-python = ">=3.11"
+dependencies = [
+    "redis>=5.0",
+    "onnxruntime>=1.17",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "prometheus-client>=0.19",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["bump_inference*"]

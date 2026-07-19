@@ -1,0 +1,87 @@
+:root {
+  --bg: #0a151d;
+  --panel: #10202c;
+  --panel-2: #0d1a24;
+  --border: #21384a;
+  --text: #d7e3ec;
+  --muted: #7d93a4;
+  --accent: #38e0a0;
+  --blue: #4aa8ff;
+  --bad: #e0576b;
+  --warn: #e8b64a;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 22px; border-bottom: 1px solid var(--border); background: var(--panel-2);
+}
+.brand { display: flex; align-items: baseline; gap: 12px; }
+.logo { font-weight: 700; font-size: 20px; color: var(--accent); letter-spacing: 0.5px; }
+.tagline { color: var(--muted); font-size: 13px; }
+.tabs button {
+  background: transparent; color: var(--muted); border: 1px solid transparent;
+  padding: 7px 16px; border-radius: 7px; cursor: pointer; font-size: 14px; margin-left: 6px;
+}
+.tabs button.active { background: var(--panel); color: var(--text); border-color: var(--border); }
+
+.content { flex: 1; padding: 20px; max-width: 1100px; width: 100%; margin: 0 auto; }
+.footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px; border-top: 1px solid var(--border); }
+
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 26px; font-weight: 650; margin-top: 4px; word-break: break-word; }
+.stat-unit { font-size: 13px; color: var(--muted); font-weight: 400; }
+.stat.good .stat-value { color: var(--accent); }
+.stat.bad .stat-value { color: var(--bad); }
+.stat.warn .stat-value { color: var(--warn); }
+
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; }
+.panel h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; color: var(--text); }
+
+.alert-banner {
+  display: flex; align-items: center; gap: 14px; padding: 14px 22px;
+  font-size: 15px; animation: slideDown 0.25s ease;
+}
+.alert-banner.critical { background: linear-gradient(90deg, #3a0d16, #5a1122); border-bottom: 2px solid var(--bad); }
+.alert-banner.warning { background: #3a2f0d; border-bottom: 2px solid var(--warn); }
+.alert-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 0 rgba(224,87,107,0.7); animation: pulse 1.2s infinite; }
+.alert-banner.warning .alert-dot { background: var(--warn); }
+.alert-body { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.alert-body strong { letter-spacing: 1px; }
+.alert-msg { color: #f0d3d8; font-size: 13px; }
+.alert-banner.warning .alert-msg { color: #efe2c0; }
+.alert-dismiss { background: transparent; border: none; color: var(--text); font-size: 22px; cursor: pointer; line-height: 1; }
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(224,87,107,0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(224,87,107,0); }
+  100% { box-shadow: 0 0 0 0 rgba(224,87,107,0); }
+}
+@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.session-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.session-pill {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; cursor: pointer; color: var(--text); text-align: left; min-width: 180px;
+}
+.session-pill.active { border-color: var(--blue); }
+.muted { color: var(--muted); font-size: 12px; }
+.error { color: var(--bad); }
+
+.alert-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.alert-table th, .alert-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.alert-table th { color: var(--muted); font-weight: 500; }
+.alert-table .row-critical td { color: #f0b8c0; }

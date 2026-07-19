@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Virtualenvs ---
+.venv/
+.venv-*/
+venv/
+env/
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Model artifacts & data caches ---
+# The ONNX model is a build artifact produced by `make model` / training.
+inference/models/*.onnx
+inference/models/*.onnx.data
+# (training/metrics.json IS committed — it documents real model performance.)
+# wfdb / PhysioNet download cache
+*.hea
+*.dat
+*.atr
+mitdb/
+data/
+
+# --- OS / editor ---
+.DS_Store
+*.swp
+.idea/
+.vscode/
+*.tsbuildinfo

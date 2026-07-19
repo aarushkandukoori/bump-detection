@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check .
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build   # typecheck + production build
+
+  test-python:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 3s --health-retries 10
+    env:
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install deps
+        run: |
+          pip install -U pip
+          pip install -e ./shared
+          pip install -r inference/requirements.txt \
+                      -r training/requirements.txt \
+                      -r api/requirements.txt \
+                      -r ingestion/requirements.txt
+          pip install pytest pytest-asyncio httpx
+      - name: Export a shape-correct ONNX artifact
+        run: python training/model.py --out inference/models/beat_cnn.onnx
+      - name: Unit + integration tests (network tests run separately)
+        run: pytest -m "not network" -q
+
+  test-network:
+    # MIT-BIH download tests — allowed to fail if PhysioNet is unreachable.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: |
+          pip install -U pip
+          pip install -e ./shared
+          pip install -r inference/requirements.txt wfdb neurokit2 pytest
+      - run: pytest -m network -q
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build all images
+        run: docker compose build

@@ -1,0 +1,7 @@
+# Ingestion service runtime deps (bump-common installed separately from ./shared)
+redis>=5.0
+wfdb>=4.1
+neurokit2>=0.2.7
+numpy>=1.26
+scipy>=1.11
+prometheus-client>=0.19

@@ -1,0 +1,69 @@
+{
+  "per_class": {
+    "Normal": {
+      "precision": 0.9023607467983336,
+      "recall": 0.8081866172853155,
+      "f1-score": 0.8526813052226402,
+      "support": 36181.0
+    },
+    "Bradycardia": {
+      "precision": 0.489010989010989,
+      "recall": 0.44919903445249065,
+      "f1-score": 0.4682603225437493,
+      "support": 4557.0
+    },
+    "Other": {
+      "precision": 0.38764331210191083,
+      "recall": 0.8217661355657575,
+      "f1-score": 0.5267895784644681,
+      "support": 3703.0
+    }
+  },
+  "macro_avg": {
+    "precision": 0.5930050159704111,
+    "recall": 0.6930505957678545,
+    "f1-score": 0.6159104020769525,
+    "support": 44441.0
+  },
+  "weighted_avg": {
+    "precision": 0.8170873842070826,
+    "recall": 0.7725073693211224,
+    "f1-score": 0.7861080174421398,
+    "support": 44441.0
+  },
+  "accuracy": 0.7725073693211224,
+  "bradycardia_recall": 0.44919903445249065,
+  "confusion_matrix": [
+    [
+      29241,
+      2133,
+      4807
+    ],
+    [
+      2510,
+      2047,
+      0
+    ],
+    [
+      654,
+      6,
+      3043
+    ]
+  ],
+  "class_labels": [
+    "Normal",
+    "Bradycardia",
+    "Other"
+  ],
+  "train_counts": {
+    "Normal": 43059,
+    "Bradycardia": 3027,
+    "Other": 5552
+  },
+  "val_counts": {
+    "Normal": 36181,
+    "Other": 3703,
+    "Bradycardia": 4557
+  },
+  "smoke": false
+}

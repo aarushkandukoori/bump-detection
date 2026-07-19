@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bump-ingestion"
+version = "0.1.0"
+description = "BUMP ingestion: replay MIT-BIH / synthetic ECG over Redis streams"
+requires-python = ">=3.11"
+dependencies = [
+    "redis>=5.0",
+    "wfdb>=4.1",
+    "neurokit2>=0.2.7",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "prometheus-client>=0.19",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["bump_ingestion*"]

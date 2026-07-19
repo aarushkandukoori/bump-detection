@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bump-common"
+version = "0.1.0"
+description = "Shared contracts and ECG signal core for the BUMP pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pydantic>=2.5",
+]
+
+[project.optional-dependencies]
+redis = ["redis>=5.0"]
+metrics = ["prometheus-client>=0.19"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bump_common*"]
